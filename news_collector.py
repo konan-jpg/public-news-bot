@@ -6,8 +6,11 @@ from config import TOPICS, EXCLUDE_KEYWORDS, NAVER_CLIENT_ID, NAVER_CLIENT_SECRE
 from database import is_duplicate, save_article
 import logging
 
-# 기본 수집 기간: 14일 (336시간)로 변경!
-def search_google_news(query, hours=336):
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+
+def search_google_news(query, hours=336):  # 14일(336시간)로 변경
+    """구글 뉴스 RSS 검색"""
     results = []
     try:
         # when:14d (최근 14일)
@@ -16,6 +19,7 @@ def search_google_news(query, hours=336):
 
         feed = feedparser.parse(url)
         
+        # UTC 기준 14일 전 계산
         now_utc = datetime.now(timezone.utc)
         cutoff_utc = now_utc - timedelta(hours=hours)
 
