@@ -20,7 +20,6 @@ jobs:
         port: 22
         command_timeout: 60s
         script: |
-          # 1. 폴더 준비
           if [ -d "news-bot" ] && [ ! -d "news-bot/.git" ]; then
             rm -rf news-bot
           fi
@@ -28,20 +27,12 @@ jobs:
             git clone https://github.com/konan-jpg/public-news-bot.git news-bot
           fi
           cd news-bot
-
-          # 2. 최신 코드 받기
           git fetch --all
           git reset --hard origin/main
-
-          # 3. 라이브러리 설치
           pip3 install -r requirements.txt
-
-          # 4. 기존 봇 종료
           pkill -f "python3 bot.py" || true
           sleep 1
-
-          # 5. 봇 재시작 (SSH와 완전 분리)
-          setsid nohup python3 bot.py > bot.log 2>&1 &
-          disown
+          nohup python3 bot.py < /dev/null > bot.log 2>&1 &
           sleep 2
-          echo "배포 완료"
+          echo "done"
+          exit 0
