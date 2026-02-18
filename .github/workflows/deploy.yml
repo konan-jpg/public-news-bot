@@ -33,6 +33,7 @@ jobs:
           pkill -f "python3 bot.py" || true
           sleep 1
           nohup python3 bot.py < /dev/null > bot.log 2>&1 &
+          disown $!
           sleep 2
           echo "done"
           exit 0
