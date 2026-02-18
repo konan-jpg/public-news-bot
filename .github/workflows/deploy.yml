@@ -1,0 +1,41 @@
+name: Deploy to Oracle Cloud
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to Server via SSH
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: 22
+        script: |
+          # 1. 봇 폴더로 이동 (없으면 자동 생성)
+          if [ ! -d "news-bot" ]; then
+            git clone https://github.com/konan-jpg/public-news-bot.git news-bot
+          fi
+          cd news-bot
+
+          # 2. 최신 코드 받기 (강제 업데이트)
+          git fetch --all
+          git reset --hard origin/main
+
+          # 3. 필요 라이브러리 설치
+          pip3 install -r requirements.txt
+
+          # 4. 기존 봇 종료
+          pkill -f bot.py || true
+
+          # 5. 봇 재시작
+          nohup python3 bot.py > bot.log 2>&1 &
+          
+          echo "✅ 배포 완료! 봇이 재시작되었습니다."
