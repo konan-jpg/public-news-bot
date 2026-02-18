@@ -19,23 +19,26 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: 22
         script: |
-          # 1. 가짜 폴더(Git 아님)가 있으면 삭제
+          # 1. 봇 폴더로 이동 (없으면 자동 생성)
           if [ -d "news-bot" ] && [ ! -d "news-bot/.git" ]; then
             rm -rf news-bot
           fi
-
-          # 2. 폴더가 없으면 새로 받기 (Git Clone)
           if [ ! -d "news-bot" ]; then
             git clone https://github.com/konan-jpg/public-news-bot.git news-bot
           fi
-          
           cd news-bot
 
-          # 3. 강제 업데이트
+          # 2. 최신 코드 받기
           git fetch --all
           git reset --hard origin/main
 
-          # 4. 라이브러리 설치 & 재시작
+          # 3. 필요 라이브러리 설치
           pip3 install -r requirements.txt
-          pkill -f bot.py || true
+
+          # 4. 기존 봇 종료 (검색 패턴을 [b]ot.py로 변경하여 자살 방지)
+          pkill -f "[b]ot.py" || true
+
+          # 5. 봇 재시작
           nohup python3 bot.py > bot.log 2>&1 &
+          
+          echo "✅ 배포 완료! 봇이 재시작되었습니다."
