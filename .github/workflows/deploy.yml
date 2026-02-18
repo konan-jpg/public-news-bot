@@ -19,23 +19,30 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: 22
         script: |
-          # 1. 봇 폴더로 이동 (없으면 자동 생성)
+          # 1. 기존 폴더가 Git 저장소가 아니면 삭제 (SCP로 올린 경우 해결)
+          if [ -d "news-bot" ] && [ ! -d "news-bot/.git" ]; then
+            echo "⚠️ 기존 폴더가 Git 저장소가 아닙니다. 삭제 후 새로 받습니다."
+            rm -rf news-bot
+          fi
+
+          # 2. 폴더가 없으면 새로 받기
           if [ ! -d "news-bot" ]; then
             git clone https://github.com/konan-jpg/public-news-bot.git news-bot
           fi
+          
           cd news-bot
 
-          # 2. 최신 코드 받기 (강제 업데이트)
+          # 3. 최신 코드 받기 (강제 업데이트)
           git fetch --all
           git reset --hard origin/main
 
-          # 3. 필요 라이브러리 설치
+          # 4. 필요 라이브러리 설치
           pip3 install -r requirements.txt
 
-          # 4. 기존 봇 종료
+          # 5. 기존 봇 종료
           pkill -f bot.py || true
 
-          # 5. 봇 재시작
+          # 6. 봇 재시작
           nohup python3 bot.py > bot.log 2>&1 &
           
           echo "✅ 배포 완료! 봇이 재시작되었습니다."
