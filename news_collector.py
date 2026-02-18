@@ -6,24 +6,18 @@ from config import TOPICS, EXCLUDE_KEYWORDS, NAVER_CLIENT_ID, NAVER_CLIENT_SECRE
 from database import is_duplicate, save_article
 import logging
 
-# 로깅 설정
 logging.basicConfig(level=logging.INFO)
 
-def search_google_news(query, hours=336):  # 14일(336시간)로 변경
-    """구글 뉴스 RSS 검색"""
+def search_google_news(query, hours=24):
     results = []
     try:
-        # when:14d (최근 14일)
-        encoded_query = quote(query + " when:14d")
+        encoded_query = quote(query + " when:1d")
         url = f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
 
         feed = feedparser.parse(url)
         
-        # UTC 기준 14일 전 계산
         now_utc = datetime.now(timezone.utc)
         cutoff_utc = now_utc - timedelta(hours=hours)
-
-        logging.info(f"검색어 [{query}] 수집 시작... (기준: {hours}시간 전)")
 
         for entry in feed.entries[:30]:
             try:
@@ -60,7 +54,7 @@ def search_google_news(query, hours=336):  # 14일(336시간)로 변경
 
     return results
 
-def search_naver_news(query, hours=336):
+def search_naver_news(query, hours=24):
     if not NAVER_CLIENT_ID or not NAVER_CLIENT_SECRET:
         return []
 
@@ -115,7 +109,7 @@ def search_naver_news(query, hours=336):
 
     return results
 
-def collect_all_news(hours=336):
+def collect_all_news(hours=24):
     """전체 주제 뉴스 수집 및 저장"""
     all_articles = []
 
