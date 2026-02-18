@@ -6,19 +6,20 @@ from config import TOPICS, EXCLUDE_KEYWORDS, NAVER_CLIENT_ID, NAVER_CLIENT_SECRE
 from database import is_duplicate, save_article
 import logging
 
-# 뉴스 수집 로직 (기본 7일로 변경)
-def search_google_news(query, hours=168):
+# 기본 수집 기간: 14일 (336시간)로 변경!
+def search_google_news(query, hours=336):
     results = []
     try:
-        # when:7d (최근 7일)
-        encoded_query = quote(query + " when:7d")
+        # when:14d (최근 14일)
+        encoded_query = quote(query + " when:14d")
         url = f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
 
         feed = feedparser.parse(url)
         
-        # UTC 기준 7일 전 계산
         now_utc = datetime.now(timezone.utc)
         cutoff_utc = now_utc - timedelta(hours=hours)
+
+        logging.info(f"검색어 [{query}] 수집 시작... (기준: {hours}시간 전)")
 
         for entry in feed.entries[:30]:
             try:
@@ -55,7 +56,7 @@ def search_google_news(query, hours=168):
 
     return results
 
-def search_naver_news(query, hours=168):
+def search_naver_news(query, hours=336):
     if not NAVER_CLIENT_ID or not NAVER_CLIENT_SECRET:
         return []
 
@@ -82,10 +83,8 @@ def search_naver_news(query, hours=168):
             link = item['link']
             
             try:
-                # 네이버 날짜 (예: Tue, 18 Feb 2026 10:00:00 +0900)
                 pub_date_str = item['pubDate']
                 pub_date_dt = datetime.strptime(pub_date_str, "%a, %d %b %Y %H:%M:%S +0900")
-                # 시간대 정보 강제 주입 (KST)
                 pub_date_dt = pub_date_dt.replace(tzinfo=get_now().tzinfo)
                 
                 if pub_date_dt < cutoff_dt:
@@ -112,7 +111,7 @@ def search_naver_news(query, hours=168):
 
     return results
 
-def collect_all_news(hours=168):
+def collect_all_news(hours=336):
     """전체 주제 뉴스 수집 및 저장"""
     all_articles = []
 
@@ -121,10 +120,8 @@ def collect_all_news(hours=168):
         required_words = topic_config.get("required", [])
 
         for query in queries:
-            # 1. 구글 뉴스 수집
             articles = search_google_news(query, hours)
             for article in articles:
-                # 필수 단어 포함 여부 체크
                 if required_words:
                     if not any(rw in article['title'] for rw in required_words):
                         continue
@@ -133,7 +130,6 @@ def collect_all_news(hours=168):
                 save_article(article)
                 all_articles.append(article)
 
-            # 2. 네이버 뉴스 수집 (설정된 경우)
             if NAVER_CLIENT_ID:
                 articles_naver = search_naver_news(query, hours)
                 for article in articles_naver:
@@ -145,6 +141,5 @@ def collect_all_news(hours=168):
                     save_article(article)
                     all_articles.append(article)
 
-    # 최신순 정렬
     all_articles.sort(key=lambda x: x['published_at'], reverse=True)
     return all_articles
