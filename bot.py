@@ -15,6 +15,7 @@ logging.basicConfig(
 
 def escape_markdown(text):
     """마크다운 특수문자 이스케이프"""
+    if not text: return ""
     special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
     for char in special_chars:
         text = text.replace(char, f"\\{char}")
@@ -32,10 +33,13 @@ async def news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🔍 최신 뉴스를 수집하고 있습니다... (약 10초 소요)")
     
     try:
+        # 뉴스 수집 (최근 24시간)
+        logging.info("뉴스 수집 시작...")
         articles = collect_all_news(hours=24)
+        logging.info(f"수집된 뉴스 개수: {len(articles)}")
         
         if not articles:
-            await update.message.reply_text("❌ 수집된 최신 뉴스가 없습니다.")
+            await update.message.reply_text("❌ 수집된 최신 뉴스가 없습니다. (서버 시간/필터링 문제 가능성)")
             return
 
         report = "📰 *정기 뉴스 보고서* (최근 24시간)\n\n"
@@ -53,9 +57,8 @@ async def news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 title = escape_markdown(item['title'])
                 press = escape_markdown(item['press'])
                 pub_date = escape_markdown(item['published_at'])
-                url = item['url']  # URL은 이스케이프 안 함
+                url = item['url']
                 
-                # MarkdownV2 형식: [텍스트](URL)
                 try:
                     report += f"{idx}\\. [{title}]({url}) \\- {press}\n"
                     report += f"   _{press} \\| {pub_date}_\n\n"
@@ -63,6 +66,7 @@ async def news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     continue
             report += "\n"
 
+        # 나눠서 보내기
         if len(report) > 4000:
             for x in range(0, len(report), 4000):
                 await update.message.reply_text(report[x:x+4000], parse_mode=ParseMode.MARKDOWN_V2, disable_web_page_preview=True)
@@ -119,11 +123,11 @@ async def scheduled_news(context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     
-    # 1. 명령어 핸들러
+    # 명령어 핸들러 (영어만 가능!)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("news", news_command))
 
-    # 2. 스케줄러 설정 (JobQueue)
+    # 스케줄러 설정 (JobQueue)
     job_queue = application.job_queue
     
     if job_queue:
