@@ -30,10 +30,6 @@ jobs:
           git fetch --all
           git reset --hard origin/main
           pip3 install -r requirements.txt
-          pkill -f "python3 bot.py" || true
-          sleep 1
-          nohup python3 bot.py < /dev/null > bot.log 2>&1 &
-          disown $!
-          sleep 2
+          sudo systemctl restart news-bot
           echo "done"
           exit 0
