@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 TELEGRAM_BOT_TOKEN = "8531743936:AAE8xqKeLbd5NForWW9OPWZ3W_8XFsOQOms"
 TELEGRAM_CHAT_ID = "595782938"
 
-# 네이버 뉴스 API 키 (전체 교체 시 이 부분이 반영됨)
+# 네이버 뉴스 API 키
 NAVER_CLIENT_ID = "OduExCNDSQXiWuJoLChK"
 NAVER_CLIENT_SECRET = "uuO13_poBK"
 
@@ -63,6 +63,8 @@ TOPICS = {
 
 # 제목에 아래 단어가 들어가면 제외(노이즈 제거용)
 EXCLUDE_KEYWORDS = [
+    # MSN 재배포 제외
+    "MSN",
     # 스포츠
     "야구", "축구", "농구", "골프", "배구", "테니스", "격투기",
     "호날두", "맨유", "손흥민", "토트넘", "리버풀", "프리미어리그",
